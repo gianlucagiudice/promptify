@@ -1,42 +1,87 @@
 import argparse
 import fnmatch
 import os
+from dataclasses import dataclass
 from pathlib import Path
-import shutil
+from typing import Iterable, List, Optional
+
 import pyperclip
 
 
-def gather_files(source_dir: Path, patterns, exclude_pattern=None):
-    files = []
-    for root, dirs, filenames in os.walk(source_dir):
-        if exclude_pattern:
-            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(d, exclude_pattern)]
-        for filename in filenames:
-            if any(fnmatch.fnmatch(filename, pat) for pat in patterns):
-                if exclude_pattern and fnmatch.fnmatch(filename, exclude_pattern):
-                    continue
-                files.append(Path(root) / filename)
-    return sorted(files)
+@dataclass
+class FileCollector:
+    """Collect files from a directory matching given patterns."""
+
+    source_dir: Path
+    patterns: List[str]
+    exclude_pattern: Optional[str] = None
+
+    def collect(self) -> List[Path]:
+        files: List[Path] = []
+        for root, dirs, filenames in os.walk(self.source_dir):
+            if self.exclude_pattern:
+                dirs[:] = [
+                    d for d in dirs if not fnmatch.fnmatch(d, self.exclude_pattern)
+                ]
+            for filename in filenames:
+                if any(fnmatch.fnmatch(filename, pat) for pat in self.patterns):
+                    if self.exclude_pattern and fnmatch.fnmatch(
+                        filename, self.exclude_pattern
+                    ):
+                        continue
+                    files.append(Path(root) / filename)
+        return sorted(files)
 
 
-def write_output(files, output_file: Path):
-    with output_file.open("w", encoding="utf-8") as out:
-        for file in files:
-            out.write("\n")
-            out.write("# ===============================================================\n")
-            out.write(f"# FILE: {file}\n")
-            out.write("# ===============================================================\n")
-            out.write(file.read_text(encoding="utf-8"))
+class PromptWriter:
+    """Write gathered files to a single output file."""
+
+    HEADER = "# ===============================================================\n"
+
+    def __init__(self, output_file: Path) -> None:
+        self.output_file = output_file
+
+    def write(self, files: Iterable[Path]) -> None:
+        with self.output_file.open("w", encoding="utf-8") as out:
+            for file in files:
+                out.write("\n")
+                out.write(self.HEADER)
+                out.write(f"# FILE: {file}\n")
+                out.write(self.HEADER)
+                out.write(file.read_text(encoding="utf-8"))
 
 
-def copy_to_clipboard(output_file: Path):
-    try:
-        pyperclip.copy(output_file.read_text(encoding="utf-8"))
-        print(f"Output written to '{output_file}' and copied to clipboard.")
-    except pyperclip.PyperclipException:
-        print(
-            f"Output written to '{output_file}'. (pyperclip could not access the clipboard)"
-        )
+class ClipboardManager:
+    """Utility class to copy content to the clipboard."""
+
+    def copy(self, file: Path) -> None:
+        try:
+            pyperclip.copy(file.read_text(encoding="utf-8"))
+            print(f"Output written to '{file}' and copied to clipboard.")
+        except pyperclip.PyperclipException:
+            print(
+                f"Output written to '{file}'. (pyperclip could not access the clipboard)"
+            )
+
+
+class Promptify:
+    """Main application class orchestrating the prompt generation."""
+
+    def __init__(
+        self,
+        source: Path,
+        output: Path,
+        patterns: List[str],
+        exclude: Optional[str] = None,
+    ) -> None:
+        self.collector = FileCollector(source, patterns, exclude)
+        self.writer = PromptWriter(output)
+        self.clipboard = ClipboardManager()
+
+    def run(self) -> None:
+        files = self.collector.collect()
+        self.writer.write(files)
+        self.clipboard.copy(self.writer.output_file)
 
 
 def parse_args(argv=None):
@@ -59,11 +104,10 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
-    patterns = args.pattern
-    files = gather_files(Path(args.source), patterns, args.exclude or None)
-    output_file = Path(args.output)
-    write_output(files, output_file)
-    copy_to_clipboard(output_file)
+    promptify = Promptify(
+        Path(args.source), Path(args.output), args.pattern, args.exclude or None
+    )
+    promptify.run()
 
 
 if __name__ == "__main__":
