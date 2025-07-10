@@ -3,7 +3,7 @@ name = "promptify-ai"
 version = "0.1.0"
 description = "Gather files into a single prompt for LLM consumption"
 authors = [
-    {name = "promptify-ai"}
+    {name = "Gianluca Giudice", email = "gianlu.giudice@gmail.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.8"
