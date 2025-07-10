@@ -1,0 +1,16 @@
+[project]
+name = "promptify-ai"
+version = "0.1.0"
+description = "Gather files into a single prompt for LLM consumption"
+authors = [
+    {name = "promptify-ai"}
+]
+readme = "README.md"
+requires-python = ">=3.8"
+
+[project.scripts]
+promptify = "promptify_ai.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
