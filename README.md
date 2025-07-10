@@ -12,7 +12,7 @@ With one command, you can include your entire codebase, or just selected files, 
 
 ## Features
 
-- **Combine your entire project or selected files** using flexible file patterns.
+- **Combine your entire project or selected files** using flexible file patterns, with support for multiple patterns specified separately.
 - **Easily exclude files or directories** from the output.
 - **Clear file boundaries** thanks to auto-generated headers.
 - **Clipboard integration:** result is automatically copied for easy pasting.
@@ -24,7 +24,7 @@ With one command, you can include your entire codebase, or just selected files, 
 ```bash
 
 # Collect files from 'myapp/', output to 'llm_context.txt', using custom patterns and excluding a folder
- promptify -s myapp -o llm_context.txt -p '*.md|*.js' -e 'docs'
+ promptify -s myapp -o llm_context.txt -p '*.md' '*.js' -e 'docs'
 
 # See all available options
  promptify -h
