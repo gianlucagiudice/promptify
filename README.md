@@ -15,7 +15,7 @@ With one command, you can include your entire codebase, or just selected files, 
 - **Combine your entire project or selected files** using flexible file patterns.
 - **Easily exclude files or directories** from the output.
 - **Clear file boundaries** thanks to auto-generated headers.
-- **macOS clipboard integration:** result is ready to paste instantly.
+- **Clipboard integration:** result is automatically copied for easy pasting.
 - **Fast and lightweight**—works with projects of any size.
 
 
@@ -42,7 +42,7 @@ With one command, you can include your entire codebase, or just selected files, 
   # FILE: path/to/your/file.ext
   # ===============================================================
   ```
-* On macOS, copies the result to your clipboard for easy pasting into LLM interfaces.
+* Automatically copies the result to your clipboard for easy pasting into LLM interfaces.
 
 
 
