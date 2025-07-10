@@ -2,8 +2,8 @@ import argparse
 import fnmatch
 import os
 from pathlib import Path
-import subprocess
 import shutil
+import pyperclip
 
 
 def gather_files(source_dir: Path, patterns, exclude_pattern=None):
@@ -30,11 +30,13 @@ def write_output(files, output_file: Path):
 
 
 def copy_to_clipboard(output_file: Path):
-    if shutil.which("pbcopy"):
-        subprocess.run(["pbcopy"], input=output_file.read_bytes())
+    try:
+        pyperclip.copy(output_file.read_text(encoding="utf-8"))
         print(f"Output written to '{output_file}' and copied to clipboard.")
-    else:
-        print(f"Output written to '{output_file}'. (pbcopy not available)")
+    except pyperclip.PyperclipException:
+        print(
+            f"Output written to '{output_file}'. (pyperclip could not access the clipboard)"
+        )
 
 
 def parse_args(argv=None):
