@@ -47,8 +47,9 @@ def parse_args(argv=None):
     parser.add_argument(
         "-p",
         "--pattern",
-        default="*.py",
-        help="File name pattern(s), use '|' to separate multiple, e.g. '*.py|*.j2'",
+        nargs='+',
+        default=["*.py"],
+        help="File name pattern(s), e.g. '*.py' '*.j2'",
     )
     parser.add_argument("-e", "--exclude", default="", help="Pattern to exclude (files or directories)")
     return parser.parse_args(argv)
@@ -56,7 +57,7 @@ def parse_args(argv=None):
 
 def main(argv=None):
     args = parse_args(argv)
-    patterns = args.pattern.split("|")
+    patterns = args.pattern
     files = gather_files(Path(args.source), patterns, args.exclude or None)
     output_file = Path(args.output)
     write_output(files, output_file)
