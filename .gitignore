@@ -1,1 +1,4 @@
 __pycache__/
+*.llm
+.vscode/
+promptify_ai.egg-info/
