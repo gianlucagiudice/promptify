@@ -15,6 +15,7 @@ With one command, you can include your entire codebase, or just selected files, 
 - **Combine your entire project or selected files** using flexible file patterns, with support for multiple patterns specified separately.
 - **Easily exclude files or directories** from the output.
 - **Clear file boundaries** thanks to auto-generated headers.
+- **Optional project tree overview** for quick context of your directory structure.
 - **Clipboard integration:** result is automatically copied for easy pasting.
 - **Fast and lightweight**—works with projects of any size.
 
@@ -25,6 +26,8 @@ With one command, you can include your entire codebase, or just selected files, 
 
 # Collect files from 'myapp/', output to 'llm_context.txt', using custom patterns and excluding a folder
  promptify -s myapp -o llm_context.txt -p '*.md' '*.js' -e 'docs'
+# Include files under 'app/src' and add a project tree from its parent directory
+ promptify -s app/src -o prompt.llm -t app
 
 # See all available options
  promptify -h
@@ -35,12 +38,13 @@ With one command, you can include your entire codebase, or just selected files, 
 
 * Recursively scans the specified directory for files matching your patterns.
 * Skips files or directories you choose to exclude.
-* Concatenates each file’s content into a single output file, with a clear header before each file:
+* Concatenates each file’s content into a single output file, preceded by an optional project tree.
+* Files are clearly marked:
 
   ```
-  # ===============================================================
-  # FILE: path/to/your/file.ext
-  # ===============================================================
+  # === FILE START: path/to/your/file.ext ===
+  ...file content...
+  # === FILE END ===
   ```
 * Automatically copies the result to your clipboard for easy pasting into LLM interfaces.
 

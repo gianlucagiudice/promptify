@@ -4,8 +4,20 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional
-
 import pyperclip
+
+
+def _build_tree_lines(directory: Path, prefix: str = "") -> List[str]:
+    """Recreate the output of the Unix ``tree`` command."""
+    entries = sorted(directory.iterdir())
+    lines: List[str] = []
+    for idx, entry in enumerate(entries):
+        connector = "└── " if idx == len(entries) - 1 else "├── "
+        lines.append(f"{prefix}{connector}{entry.name}")
+        if entry.is_dir():
+            extension = "    " if idx == len(entries) - 1 else "│   "
+            lines.extend(_build_tree_lines(entry, prefix + extension))
+    return lines
 
 
 @dataclass
@@ -36,19 +48,27 @@ class FileCollector:
 class PromptWriter:
     """Write gathered files to a single output file."""
 
-    HEADER = "# ===============================================================\n"
+    FILE_START = "# === FILE START: {file} ===\n"
+    FILE_END = "# === FILE END ===\n"
+    TREE_START = "# === PROJECT TREE: {dir} ===\n"
+    TREE_END = "# === END PROJECT TREE ===\n"
 
     def __init__(self, output_file: Path) -> None:
         self.output_file = output_file
 
-    def write(self, files: Iterable[Path]) -> None:
+    def _write_tree(self, out, tree_dir: Path) -> None:
+        out.write(self.TREE_START.format(dir=tree_dir))
+        for line in _build_tree_lines(tree_dir):
+            out.write(line + "\n")
+        out.write(self.TREE_END + "\n\n")
+
+    def write(self, files: Iterable[Path], tree_dir: Path) -> None:
         with self.output_file.open("w", encoding="utf-8") as out:
+            self._write_tree(out, tree_dir)
             for file in files:
-                out.write("\n")
-                out.write(self.HEADER)
-                out.write(f"# FILE: {file}\n")
-                out.write(self.HEADER)
+                out.write(self.FILE_START.format(file=file))
                 out.write(file.read_text(encoding="utf-8"))
+                out.write("\n" + self.FILE_END + "\n\n")
 
 
 class ClipboardManager:
@@ -73,14 +93,16 @@ class Promptify:
         output: Path,
         patterns: List[str],
         exclude: Optional[str] = None,
+        tree_dir: Optional[Path] = None,
     ) -> None:
         self.collector = FileCollector(source, patterns, exclude)
         self.writer = PromptWriter(output)
         self.clipboard = ClipboardManager()
+        self.tree_dir = tree_dir or source.parent
 
     def run(self) -> None:
         files = self.collector.collect()
-        self.writer.write(files)
+        self.writer.write(files, self.tree_dir)
         self.clipboard.copy(self.writer.output_file)
 
 
@@ -99,13 +121,23 @@ def parse_args(argv=None):
         help="File name pattern(s), e.g. '*.py' '*.j2'",
     )
     parser.add_argument("-e", "--exclude", default="", help="Pattern to exclude (files or directories)")
+    parser.add_argument(
+        "-t",
+        "--tree",
+        default=None,
+        help="Directory to generate the tree from (defaults to parent of source)",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv=None):
     args = parse_args(argv)
     promptify = Promptify(
-        Path(args.source), Path(args.output), args.pattern, args.exclude or None
+        Path(args.source),
+        Path(args.output),
+        args.pattern,
+        args.exclude or None,
+        Path(args.tree) if args.tree else None,
     )
     promptify.run()
 
