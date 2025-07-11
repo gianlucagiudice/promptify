@@ -52,19 +52,30 @@ class PromptWriter:
     FILE_END = "# === FILE END ===\n"
     TREE_START = "# === PROJECT TREE: {dir} ===\n"
     TREE_END = "# === END PROJECT TREE ===\n"
+    INSTRUCTION_HEADER = "USER_REQUEST\n"
+    TREE_HEADER = "TREE\n"
+    CODE_HEADER = "CODE\n"
 
     def __init__(self, output_file: Path) -> None:
         self.output_file = output_file
 
+    def _write_instruction(self, out, instruction: str) -> None:
+        out.write(self.INSTRUCTION_HEADER)
+        out.write(instruction.strip() + "\n\n")
+
     def _write_tree(self, out, tree_dir: Path) -> None:
+        out.write(self.TREE_HEADER)
         out.write(self.TREE_START.format(dir=tree_dir))
         for line in _build_tree_lines(tree_dir):
             out.write(line + "\n")
         out.write(self.TREE_END + "\n\n")
 
-    def write(self, files: Iterable[Path], tree_dir: Path) -> None:
+    def write(self, files: Iterable[Path], tree_dir: Path, instruction: Optional[str] = None) -> None:
         with self.output_file.open("w", encoding="utf-8") as out:
+            if instruction:
+                self._write_instruction(out, instruction)
             self._write_tree(out, tree_dir)
+            out.write(self.CODE_HEADER)
             for file in files:
                 out.write(self.FILE_START.format(file=file))
                 out.write(file.read_text(encoding="utf-8"))
@@ -94,15 +105,17 @@ class Promptify:
         patterns: List[str],
         exclude: Optional[str] = None,
         tree_dir: Optional[Path] = None,
+        instruction: Optional[str] = None,
     ) -> None:
         self.collector = FileCollector(source, patterns, exclude)
         self.writer = PromptWriter(output)
         self.clipboard = ClipboardManager()
         self.tree_dir = tree_dir or source.parent
+        self.instruction = instruction
 
     def run(self) -> None:
         files = self.collector.collect()
-        self.writer.write(files, self.tree_dir)
+        self.writer.write(files, self.tree_dir, self.instruction)
         self.clipboard.copy(self.writer.output_file)
 
 
@@ -127,6 +140,12 @@ def parse_args(argv=None):
         default=None,
         help="Directory to generate the tree from (defaults to parent of source)",
     )
+    parser.add_argument(
+        "-i",
+        "--instruction",
+        default=None,
+        help="Instruction to prepend to the final prompt",
+    )
     return parser.parse_args(argv)
 
 
@@ -138,6 +157,7 @@ def main(argv=None):
         args.pattern,
         args.exclude or None,
         Path(args.tree) if args.tree else None,
+        args.instruction,
     )
     promptify.run()
 

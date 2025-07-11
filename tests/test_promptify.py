@@ -71,3 +71,22 @@ def test_promptify_custom_tree(tmp_path, monkeypatch):
     data = out.read_text()
     assert f"# === PROJECT TREE: {custom_tree}" in data
     assert prompt.tree_dir == custom_tree
+
+
+def test_promptify_with_instruction(tmp_path, monkeypatch):
+    src = tmp_path / "src"
+    src.mkdir()
+    f = src / "file.txt"
+    f.write_text("hello")
+
+    out = tmp_path / "out.llm"
+
+    monkeypatch.setattr(pyperclip, "copy", lambda text: None)
+
+    prompt = Promptify(source=src, output=out, patterns=["*.txt"], instruction="say hi")
+    prompt.run()
+
+    lines = out.read_text().splitlines()
+    assert lines[0] == "USER_REQUEST"
+    assert lines[1] == "say hi"
+    assert "CODE" in lines

@@ -55,23 +55,35 @@ class TestPromptWriter(unittest.TestCase):
             file2.write_text("world")
             out = base / "out.llm"
             writer = PromptWriter(out)
-            writer.write([file1, file2])
+            writer.write([file1, file2], base)
             content = out.read_text()
-            # two headers per file (before and after file name)
-            self.assertEqual(content.count(PromptWriter.HEADER), 4)
-            self.assertIn(f"# FILE: {file1}", content)
+            self.assertEqual(content.count("# === FILE START:"), 2)
+            self.assertIn(f"# === FILE START: {file1}", content)
             self.assertIn("hello", content)
-            self.assertIn(f"# FILE: {file2}", content)
+            self.assertIn(f"# === FILE START: {file2}", content)
             self.assertIn("world", content)
 
 
 class TestParseArgs(unittest.TestCase):
     def test_custom_args(self):
-        args = parse_args(["-s", "src", "-o", "out.txt", "-p", "*.txt", "*.py", "-e", "venv"])
+        args = parse_args([
+            "-s",
+            "src",
+            "-o",
+            "out.txt",
+            "-p",
+            "*.txt",
+            "*.py",
+            "-e",
+            "venv",
+            "-i",
+            "do something",
+        ])
         self.assertEqual(args.source, "src")
         self.assertEqual(args.output, "out.txt")
         self.assertEqual(args.pattern, ["*.txt", "*.py"])
         self.assertEqual(args.exclude, "venv")
+        self.assertEqual(args.instruction, "do something")
 
     def test_defaults(self):
         args = parse_args([])
@@ -79,6 +91,7 @@ class TestParseArgs(unittest.TestCase):
         self.assertEqual(args.output, "prompt.llm")
         self.assertEqual(args.pattern, ["*.py"])
         self.assertEqual(args.exclude, "")
+        self.assertIsNone(args.instruction)
 
 
 class TestPromptifyIntegration(unittest.TestCase):
@@ -90,13 +103,14 @@ class TestPromptifyIntegration(unittest.TestCase):
             file1 = src / "x.py"
             file1.write_text("print('x')")
             out = base / "out.llm"
-            prompt = Promptify(src, out, ["*.py"])
+            prompt = Promptify(src, out, ["*.py"], instruction="do it")
             with patch.object(prompt.clipboard, "copy") as mock_copy:
                 prompt.run()
                 mock_copy.assert_called_once_with(out)
             self.assertTrue(out.exists())
             text = out.read_text()
             self.assertIn("x.py", text)
+            self.assertIn("do it", text.splitlines()[1])
 
     def test_main_invocation(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -109,9 +123,11 @@ class TestPromptifyIntegration(unittest.TestCase):
                 instance = MockPromptify.return_value
                 from promptify_ai.cli import main
 
-                main(["-s", str(src), "-o", str(out), "-p", "*.py"])
+                main(["-s", str(src), "-o", str(out), "-p", "*.py", "-i", "inst"])
 
-                MockPromptify.assert_called_once_with(src, out, ["*.py"], None)
+                MockPromptify.assert_called_once_with(
+                    src, out, ["*.py"], None, None, "inst"
+                )
                 instance.run.assert_called_once()
 
 
