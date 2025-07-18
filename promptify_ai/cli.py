@@ -9,7 +9,13 @@ import pyperclip
 
 def _build_tree_lines(directory: Path, prefix: str = "") -> List[str]:
     """Recreate the output of the Unix ``tree`` command."""
-    entries = sorted(directory.iterdir())
+    entries = sorted(
+        [
+            e
+            for e in directory.iterdir()
+            if not (e.is_dir() and (e.name.startswith(".") or e.name.startswith("__")))
+        ]
+    )
     lines: List[str] = []
     for idx, entry in enumerate(entries):
         connector = "└── " if idx == len(entries) - 1 else "├── "
@@ -31,10 +37,16 @@ class FileCollector:
     def collect(self) -> List[Path]:
         files: List[Path] = []
         for root, dirs, filenames in os.walk(self.source_dir):
-            if self.exclude_pattern:
-                dirs[:] = [
-                    d for d in dirs if not fnmatch.fnmatch(d, self.exclude_pattern)
-                ]
+            dirs[:] = [
+                d
+                for d in dirs
+                if not d.startswith(".")
+                and not d.startswith("__")
+                and not (
+                    self.exclude_pattern
+                    and fnmatch.fnmatch(d, self.exclude_pattern)
+                )
+            ]
             for filename in filenames:
                 if any(fnmatch.fnmatch(filename, pat) for pat in self.patterns):
                     if self.exclude_pattern and fnmatch.fnmatch(
@@ -46,7 +58,7 @@ class FileCollector:
 
 
 class PromptWriter:
-    """Write gathered files to a single output file."""
+    """Write gathered files to a single output file or return the prompt text."""
 
     FILE_START = "# === FILE START: {file} ===\n"
     FILE_END = "# === FILE END ===\n"
@@ -56,7 +68,7 @@ class PromptWriter:
     TREE_HEADER = "TREE\n"
     CODE_HEADER = "CODE\n"
 
-    def __init__(self, output_file: Path) -> None:
+    def __init__(self, output_file: Optional[Path]) -> None:
         self.output_file = output_file
 
     def _write_instruction(self, out, instruction: str) -> None:
@@ -70,29 +82,47 @@ class PromptWriter:
             out.write(line + "\n")
         out.write(self.TREE_END + "\n\n")
 
-    def write(self, files: Iterable[Path], tree_dir: Path, instruction: Optional[str] = None) -> None:
-        with self.output_file.open("w", encoding="utf-8") as out:
-            if instruction:
-                self._write_instruction(out, instruction)
-            self._write_tree(out, tree_dir)
-            out.write(self.CODE_HEADER)
-            for file in files:
-                out.write(self.FILE_START.format(file=file))
-                out.write(file.read_text(encoding="utf-8"))
-                out.write("\n" + self.FILE_END + "\n\n")
+    def _write_all(self, out, files: Iterable[Path], tree_dir: Path, instruction: Optional[str]) -> None:
+        if instruction:
+            self._write_instruction(out, instruction)
+        self._write_tree(out, tree_dir)
+        out.write(self.CODE_HEADER)
+        for file in files:
+            out.write(self.FILE_START.format(file=file))
+            out.write(file.read_text(encoding="utf-8"))
+            out.write("\n" + self.FILE_END + "\n\n")
+
+    def write(self, files: Iterable[Path], tree_dir: Path, instruction: Optional[str] = None) -> str:
+        if self.output_file:
+            with self.output_file.open("w", encoding="utf-8") as out:
+                self._write_all(out, files, tree_dir, instruction)
+            return self.output_file.read_text(encoding="utf-8")
+        else:
+            from io import StringIO
+            buf = StringIO()
+            self._write_all(buf, files, tree_dir, instruction)
+            return buf.getvalue()
 
 
 class ClipboardManager:
     """Utility class to copy content to the clipboard."""
 
-    def copy(self, file: Path) -> None:
+    def copy(self, text: str, file: Optional[Path] = None) -> None:
         try:
-            pyperclip.copy(file.read_text(encoding="utf-8"))
-            print(f"Output written to '{file}' and copied to clipboard.")
+            pyperclip.copy(text)
+            if file:
+                print(f"Output written to '{file}' and copied to clipboard.")
+            else:
+                print("Output copied to clipboard.")
         except pyperclip.PyperclipException:
-            print(
-                f"Output written to '{file}'. (pyperclip could not access the clipboard)"
-            )
+            if file:
+                print(
+                    f"Output written to '{file}'. (pyperclip could not access the clipboard)"
+                )
+            else:
+                print(
+                    "Output generated. (pyperclip could not access the clipboard)"
+                )
 
 
 class Promptify:
@@ -101,7 +131,7 @@ class Promptify:
     def __init__(
         self,
         source: Path,
-        output: Path,
+        output: Optional[Path],
         patterns: List[str],
         exclude: Optional[str] = None,
         tree_dir: Optional[Path] = None,
@@ -115,8 +145,8 @@ class Promptify:
 
     def run(self) -> None:
         files = self.collector.collect()
-        self.writer.write(files, self.tree_dir, self.instruction)
-        self.clipboard.copy(self.writer.output_file)
+        text = self.writer.write(files, self.tree_dir, self.instruction)
+        self.clipboard.copy(text, self.writer.output_file)
 
 
 def parse_args(argv=None):
@@ -125,7 +155,12 @@ def parse_args(argv=None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("-s", "--source", default="src", help="Source directory")
-    parser.add_argument("-o", "--output", default="prompt.llm", help="Output file")
+    parser.add_argument(
+        "-o",
+        "--output",
+        default=None,
+        help="Output file (if omitted, only copy to clipboard)",
+    )
     parser.add_argument(
         "-p",
         "--pattern",
@@ -153,7 +188,7 @@ def main(argv=None):
     args = parse_args(argv)
     promptify = Promptify(
         Path(args.source),
-        Path(args.output),
+        Path(args.output) if args.output else None,
         args.pattern,
         args.exclude or None,
         Path(args.tree) if args.tree else None,
