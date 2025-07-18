@@ -38,7 +38,7 @@ With one command, you can include your entire codebase, or just selected files, 
 
 * Recursively scans the specified directory for files matching your patterns.
 * Skips files or directories you choose to exclude.
-* Concatenates each file’s content into a single output file, preceded by an optional project tree.
+* Concatenates each file’s content into a single prompt, optionally saved to a file, preceded by a project tree.
 * Files are clearly marked:
 
   ```

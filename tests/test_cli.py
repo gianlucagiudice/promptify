@@ -41,6 +41,24 @@ def test_filecollector_multiple_patterns(sample_dir: Path):
     ]
 
 
+def test_filecollector_skips_hidden_and_dunder_dirs(tmp_path: Path):
+    base = tmp_path
+    hidden = base / ".hidden"
+    hidden.mkdir()
+    (hidden / "x.py").write_text("print('x')")
+    dunder = base / "__cache__"
+    dunder.mkdir()
+    (dunder / "y.py").write_text("print('y')")
+    visible = base / "vis"
+    visible.mkdir()
+    (visible / "z.py").write_text("print('z')")
+
+    collector = FileCollector(base, ["*.py"])
+    files = collector.collect()
+    relative = [f.relative_to(base).as_posix() for f in files]
+    assert relative == ["vis/z.py"]
+
+
 def test_promptwriter_headers(tmp_path: Path):
     file1 = tmp_path / "file1.txt"
     file2 = tmp_path / "file2.txt"
@@ -83,7 +101,7 @@ def test_parse_args_custom():
 def test_parse_args_defaults():
     args = parse_args([])
     assert args.source == "src"
-    assert args.output == "prompt.llm"
+    assert args.output is None
     assert args.pattern == ["*.py"]
     assert args.exclude == ""
     assert args.instruction is None
@@ -97,7 +115,9 @@ def test_promptify_run(tmp_path: Path):
     prompt = Promptify(src, out, ["*.py"], instruction="do it")
     with patch.object(prompt.clipboard, "copy") as mock_copy:
         prompt.run()
-        mock_copy.assert_called_once_with(out)
+        assert mock_copy.call_count == 1
+        args_called = mock_copy.call_args[0]
+        assert args_called[1] == out
     assert out.exists()
     text = out.read_text()
     assert "x.py" in text
