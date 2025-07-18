@@ -1,5 +1,5 @@
 version = 1
-revision = 1
+revision = 2
 requires-python = ">=3.8"
 
 [[package]]
@@ -16,5 +16,5 @@ requires-dist = [{ name = "pyperclip", specifier = ">=1.8" }]
 [[package]]
 name = "pyperclip"
 version = "1.9.0"
-source = { registry = "https://artifactory.devops.internal.unicreditgroup.eu/artifactory/api/pypi/dsx-pypi-group/simple" }
-sdist = { url = "https://artifactory.devops.internal.unicreditgroup.eu/artifactory/api/pypi/dsx-pypi-group/packages/packages/30/23/2f0a3efc4d6a32f3b63cdff36cd398d9701d26cda58e3ab97ac79fb5e60d/pyperclip-1.9.0.tar.gz", hash = "sha256:b7de0142ddc81bfc5c7507eea19da920b92252b548b96186caf94a5e2527d310" }
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/23/2f0a3efc4d6a32f3b63cdff36cd398d9701d26cda58e3ab97ac79fb5e60d/pyperclip-1.9.0.tar.gz", hash = "sha256:b7de0142ddc81bfc5c7507eea19da920b92252b548b96186caf94a5e2527d310", size = 20961, upload-time = "2024-06-18T20:38:48.401Z" }
