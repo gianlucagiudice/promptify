@@ -1,6 +1,6 @@
 [project]
 name = "promptify-ai"
-version = "0.1.0"
+version = "0.1.1"
 description = "Gather files into a single prompt for LLM consumption"
 authors = [
     {name = "Gianluca Giudice", email = "gianlu.giudice@gmail.com"}
