@@ -68,10 +68,10 @@ def test_promptwriter_headers(tmp_path: Path):
     writer = PromptWriter(out)
     writer.write([file1, file2], tmp_path)
     content = out.read_text()
-    assert content.count("# === FILE START:") == 2
-    assert f"# === FILE START: {file1}" in content
+    assert content.count("# === BEGIN FILE:") == 2
+    assert f"# === BEGIN FILE: {file1}" in content
     assert "hello" in content
-    assert f"# === FILE START: {file2}" in content
+    assert f"# === BEGIN FILE: {file2}" in content
     assert "world" in content
 
 

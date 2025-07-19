@@ -57,10 +57,10 @@ def test_promptify_default_tree(tmp_path, monkeypatch):
     prompt.run()
 
     data = out.read_text()
-    assert "# === PROJECT TREE:" in data
+    assert "# === BEGIN PROJECT TREE:" in data
     assert "└── src" in data
     assert "f1.txt" in data and "f2.txt" in data
-    assert data.count("# === FILE START:") == 2
+    assert data.count("# === BEGIN FILE:") == 2
     assert prompt.tree_dir == app
 
 
@@ -83,7 +83,7 @@ def test_promptify_custom_tree(tmp_path, monkeypatch):
     prompt.run()
 
     data = out.read_text()
-    assert f"# === PROJECT TREE: {custom_tree}" in data
+    assert f"# === BEGIN PROJECT TREE: {custom_tree}" in data
     assert prompt.tree_dir == custom_tree
 
 
@@ -103,7 +103,7 @@ def test_promptify_with_instruction(tmp_path, monkeypatch):
     lines = out.read_text().splitlines()
     assert lines[0] == "USER_REQUEST"
     assert lines[1] == "say hi"
-    assert "CODE" in lines
+    assert "FILES" in lines
 
 
 def test_promptify_no_output(tmp_path, monkeypatch):

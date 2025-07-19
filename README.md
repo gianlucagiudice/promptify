@@ -42,9 +42,9 @@ With one command, you can include your entire codebase, or just selected files, 
 * Files are clearly marked:
 
   ```
-  # === FILE START: path/to/your/file.ext ===
+  # === BEGIN FILE: path/to/your/file.ext ===
   ...file content...
-  # === FILE END ===
+  # === END FILE ===
   ```
 * Automatically copies the result to your clipboard for easy pasting into LLM interfaces.
 
