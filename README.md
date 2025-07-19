@@ -39,3 +39,4 @@ promptify -h
 ## License
 
 MIT License.
+
