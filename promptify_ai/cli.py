@@ -60,13 +60,13 @@ class FileCollector:
 class PromptWriter:
     """Write gathered files to a single output file or return the prompt text."""
 
-    FILE_START = "# === FILE START: {file} ===\n"
-    FILE_END = "# === FILE END ===\n"
-    TREE_START = "# === PROJECT TREE: {dir} ===\n"
+    FILE_START = "# === BEGIN FILE: {file} ===\n"
+    FILE_END = "# === END FILE ===\n"
+    TREE_START = "# === BEGIN PROJECT TREE: {dir} ===\n"
     TREE_END = "# === END PROJECT TREE ===\n"
     INSTRUCTION_HEADER = "USER_REQUEST\n"
-    TREE_HEADER = "TREE\n"
-    CODE_HEADER = "CODE\n"
+    TREE_HEADER = "PROJECT TREE\n"
+    FILES_HEADER = "FILES\n"
 
     def __init__(self, output_file: Optional[Path]) -> None:
         self.output_file = output_file
@@ -86,7 +86,7 @@ class PromptWriter:
         if instruction:
             self._write_instruction(out, instruction)
         self._write_tree(out, tree_dir)
-        out.write(self.CODE_HEADER)
+        out.write(self.FILES_HEADER)
         for file in files:
             out.write(self.FILE_START.format(file=file))
             out.write(file.read_text(encoding="utf-8"))
