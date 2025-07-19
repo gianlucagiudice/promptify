@@ -52,6 +52,9 @@ def test_promptify_default_tree(tmp_path, monkeypatch):
     out = tmp_path / "out.llm"
 
     monkeypatch.setattr(pyperclip, "copy", lambda text: None)
+    # Simulate running the command from the temporary directory so the default
+    # tree directory uses this location.
+    monkeypatch.chdir(tmp_path)
 
     prompt = Promptify(source=src, output=out, patterns=["*.txt"], exclude=None)
     prompt.run()
@@ -61,7 +64,7 @@ def test_promptify_default_tree(tmp_path, monkeypatch):
     assert "└── src" in data
     assert "f1.txt" in data and "f2.txt" in data
     assert data.count("# === BEGIN FILE:") == 2
-    assert prompt.tree_dir == app
+    assert prompt.tree_dir == Path.cwd()
 
 
 def test_promptify_custom_tree(tmp_path, monkeypatch):

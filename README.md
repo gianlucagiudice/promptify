@@ -15,7 +15,8 @@ pip install promptify-ai
 # Collect files from 'myapp/' and output to 'llm_context.txt'
 promptify -s myapp -o llm_context.txt -p '*.md' '*.js' -e 'docs'
 
-# Include files under 'app/src' and add a project tree from its parent directory
+# Include files under 'app/src' and add a project tree from 'app' (the default
+# tree is generated from the current directory)
 promptify -s app/src -o prompt.llm -t app
 
 # See all available options
