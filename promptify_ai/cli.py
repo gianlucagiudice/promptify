@@ -140,7 +140,10 @@ class Promptify:
         self.collector = FileCollector(source, patterns, exclude)
         self.writer = PromptWriter(output)
         self.clipboard = ClipboardManager()
-        self.tree_dir = tree_dir or source.parent
+        # Default tree directory to the current working directory when not
+        # explicitly provided, so the project tree reflects where the command
+        # was invoked.
+        self.tree_dir = tree_dir or Path.cwd()
         self.instruction = instruction
 
     def run(self) -> None:
@@ -173,7 +176,7 @@ def parse_args(argv=None):
         "-t",
         "--tree",
         default=None,
-        help="Directory to generate the tree from (defaults to parent of source)",
+        help="Directory to generate the tree from (defaults to current directory)",
     )
     parser.add_argument(
         "-i",
