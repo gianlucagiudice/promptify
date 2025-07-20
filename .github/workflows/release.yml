@@ -23,10 +23,11 @@ jobs:
       - name: Install dependencies
         run: pip install toml
 
-      - name: Bump minor version
+      # === PATCH bump instead of minor ===
+      - name: Bump patch version
         id: bump
         run: |
-          NEW_VERSION=$(python scripts/bump_minor.py)
+          NEW_VERSION=$(python scripts/bump_patch.py)
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Commit version bump
