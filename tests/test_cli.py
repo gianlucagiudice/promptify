@@ -75,6 +75,16 @@ def test_promptwriter_headers(tmp_path: Path):
     assert "world" in content
 
 
+def test_promptwriter_handles_bad_utf8(tmp_path: Path):
+    bad_file = tmp_path / "bad.bin"
+    bad_file.write_bytes(b"\xff\xfehello")
+    out = tmp_path / "out.llm"
+    writer = PromptWriter(out)
+    writer.write([bad_file], tmp_path)
+    text = out.read_text()
+    assert "\ufffd" in text
+
+
 def test_parse_args_custom():
     args = parse_args(
         [
