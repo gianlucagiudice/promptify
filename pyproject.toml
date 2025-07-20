@@ -1,17 +1,17 @@
 [project]
 name = "promptify-ai"
-version = "0.1.2"
+version = "0.2.0"
 description = "Gather files into a single prompt for LLM consumption"
-authors = [
-    {name = "Gianluca Giudice", email = "gianlu.giudice@gmail.com"}
-]
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["pyperclip>=1.8"]
+dependencies = [ "pyperclip>=1.8",]
+[[project.authors]]
+name = "Gianluca Giudice"
+email = "gianlu.giudice@gmail.com"
+
+[build-system]
+requires = [ "setuptools>=61",]
+build-backend = "setuptools.build_meta"
 
 [project.scripts]
 promptify = "promptify_ai.cli:main"
-
-[build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
