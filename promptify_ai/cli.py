@@ -89,7 +89,7 @@ class PromptWriter:
         out.write(self.FILES_HEADER)
         for file in files:
             out.write(self.FILE_START.format(file=file))
-            out.write(file.read_text(encoding="utf-8"))
+            out.write(file.read_text(encoding="utf-8", errors="replace"))
             out.write("\n" + self.FILE_END + "\n\n")
 
     def write(self, files: Iterable[Path], tree_dir: Path, instruction: Optional[str] = None) -> str:
